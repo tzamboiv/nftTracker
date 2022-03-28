@@ -1,0 +1,45 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: >
+  nftTracker
+
+  Sample SAM Template for nftTracker
+
+# More info about Globals: https://github.com/awslabs/serverless-application-model/blob/master/docs/globals.rst
+Globals:
+  Function:
+    Timeout: 15
+    Environment:
+      Variables:
+        API_KEY: dummy
+
+Resources:
+  HelloWorldFunction:
+    Type: AWS::Serverless::Function # More info about Function Resource: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#awsserverlessfunction
+    Properties:
+      Layers:
+            - arn:aws:lambda:us-west-2:017000801446:layer:AWSLambdaPowertoolsPython:15
+      CodeUri: hello_world/
+      Handler: app.lambda_handler
+      Runtime: python3.8
+      ReservedConcurrentExecutions:
+        5
+      Architectures:
+        - x86_64
+      Policies:
+        - AmazonDynamoDBFullAccess
+      Events:
+        MySQSEvent:
+          Type: SQS
+          Properties:
+            Queue: !GetAtt MySqsQueue.Arn
+            BatchSize: 1
+  MySqsQueue:
+    Type: AWS::SQS::Queue
+    Properties:
+      RedrivePolicy:
+          deadLetterTargetArn: !GetAtt MyDLQueue.Arn
+          maxReceiveCount: 5
+
+  MyDLQueue:
+    Type: AWS::SQS::Queue
